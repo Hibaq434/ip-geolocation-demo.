@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🌍 IP Geolocation Viewer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 48px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      color: #94a3b8;
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+
+    .ip-badge {
+      display: inline-block;
+      margin-top: 16px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 8px 22px;
+      border-radius: 999px;
+      font-family: monospace;
+      font-size: 1rem;
+      color: #38bdf8;
+      letter-spacing: 0.5px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 620px) {
+      .cards { grid-template-columns: 1fr; }
+      header h1 { font-size: 1.6rem; }
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 28px 24px;
+      border: 1px solid #334155;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .card-header h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .card.ipapi .card-header h2 { color: #60a5fa; }
+    .card.ipapi .badge { background: #1d3a6e; color: #60a5fa; }
+
+    .card.ipinfo .card-header h2 { color: #34d399; }
+    .card.ipinfo .badge { background: #134e3a; color: #34d399; }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 9px 0;
+      border-bottom: 1px solid #263548;
+      gap: 12px;
+    }
+
+    .row:last-child { border-bottom: none; }
+
+    .label {
+      color: #64748b;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+
+    .value {
+      font-size: 0.88rem;
+      font-weight: 500;
+      text-align: right;
+      word-break: break-all;
+      max-width: 60%;
+      color: #cbd5e1;
+    }
+
+    .value.mono {
+      font-family: monospace;
+      color: #94a3b8;
+      font-size: 0.82rem;
+    }
+
+    .error-box {
+      background: #2d1515;
+      border: 1px solid #7f1d1d;
+      border-radius: 10px;
+      padding: 16px;
+      color: #fca5a5;
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    .error-box strong { display: block; margin-bottom: 6px; }
+
+    .comparison-note {
+      max-width: 860px;
+      margin: 24px auto 0;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.83rem;
+      color: #64748b;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .comparison-note span { color: #94a3b8; }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #334155;
+      font-size: 0.78rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🌍 IP Geolocation Viewer</h1>
+    <p>Comparing results from two free IP lookup APIs</p>
+    <div class="ip-badge">Detected IP: {{ ip }}</div>
+  </header>
+
+  <div class="cards">
+
+    <!-- ip-api.com -->
+    <div class="card ipapi">
+      <div class="card-header">
+        <h2>ip-api.com</h2>
+        <span class="badge">No Auth · HTTP</span>
+      </div>
+
+      {% if ipapi.error %}
+        <div class="error-box">
+          <strong>⚠️ Lookup Failed</strong>
+          {{ ipapi.error }}
+        </div>
+      {% else %}
+        {% set fields = [
+          ("Country",    ipapi.country,    false),
+          ("Region",     ipapi.region,     false),
+          ("City",       ipapi.city,       false),
+          ("ZIP Code",   ipapi.zip,        true),
+          ("Latitude",   ipapi.latitude,   true),
+          ("Longitude",  ipapi.longitude,  true),
+          ("Timezone",   ipapi.timezone,   false),
+          ("ISP",        ipapi.isp,        false),
+          ("Org",        ipapi.org,        false)
+        ] %}
+        {% for label, value, is_mono in fields %}
+        <div class="row">
+          <span class="label">{{ label }}</span>
+          <span class="value {% if is_mono %}mono{% endif %}">{{ value or "—" }}</span>
+        </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <!-- ipinfo.io -->
+    <div class="card ipinfo">
+      <div class="card-header">
+        <h2>ipinfo.io</h2>
+        <span class="badge">Token · HTTPS</span>
+      </div>
+
+      {% if ipinfo.error %}
+        <div class="error-box">
+          <strong>⚠️ Lookup Failed</strong>
+          {{ ipinfo.error }}
+        </div>
+      {% else %}
+        {% set fields = [
+          ("Country",    ipinfo.country,    false),
+          ("Region",     ipinfo.region,     false),
+          ("City",       ipinfo.city,       false),
+          ("ZIP Code",   ipinfo.zip,        true),
+          ("Latitude",   ipinfo.latitude,   true),
+          ("Longitude",  ipinfo.longitude,  true),
+          ("Timezone",   ipinfo.timezone,   false),
+          ("ISP / Org",  ipinfo.org,        false)
+        ] %}
+        {% for label, value, is_mono in fields %}
+        <div class="row">
+          <span class="label">{{ label }}</span>
+          <span class="value {% if is_mono %}mono{% endif %}">{{ value or "—" }}</span>
+        </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+  </div>
+
+  <div class="comparison-note">
+    <span>ip-api.com</span> — Free, no auth, HTTP only, 45 req/min limit &nbsp;·&nbsp;
+    <span>ipinfo.io</span> — Free token required, HTTPS, 50,000 req/month
+    <br/>Results may differ slightly due to different underlying databases.
+  </div>
+
+  <footer>
+    Built with Python · Flask · ip-api.com · ipinfo.io &nbsp;|&nbsp; Moringa School Capstone
+  </footer>
+
+</body>
+</html>
